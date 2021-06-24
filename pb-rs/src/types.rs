@@ -1943,14 +1943,8 @@ impl FileDescriptor {
             // if the include path item is absolute, then append the filename,
             // otherwise it is always relative to the file.
             let mut matching_file = None;
-            for path in import_search_path {
-                let candidate = if path.is_absolute() {
-                    path.join(&import)
-                } else {
-                    in_file
-                        .parent()
-                        .map_or_else(|| path.join(&import), |p| p.join(path).join(&import))
-                };
+            for path in import_search_path {             
+                let candidate = path.join(&import);
                 if candidate.exists() {
                     matching_file = Some(candidate);
                     break;
@@ -2193,17 +2187,15 @@ impl FileDescriptor {
                 })
             {
                 if let FieldType::MessageOrEnum(name) = typ.clone() {
-                    let test_names: Vec<String> = if name.starts_with('.') {
-                        vec![name.clone().split_off(1)]
-                    } else if m.package.is_empty() {
-                        vec![name.clone(), format!("{}.{}", m.name, name)]
-                    } else {
+                    let test_names: Vec<String> = 
                         vec![
                             name.clone(),
+                            format!("{}.{}", m.name, name),
+                            name.clone().split_off(1), 
                             format!("{}.{}", m.package, name),
+                            format!("{}.{}", m.module, name),
                             format!("{}.{}.{}", m.package, m.name, name),
-                        ]
-                    };
+                            format!("{}.{}.{}", m.module, m.name, name)];
                     for name in &test_names {
                         if let Some(msg) = full_msgs.get(&*name) {
                             *typ = FieldType::Message(msg.clone());
